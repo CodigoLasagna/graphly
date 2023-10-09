@@ -77,24 +77,103 @@ def print_mst(mst):
     for obj in mst:
         print(obj.node_a.value)
 
+
+def dijkstra(graph, start_node):
+    # Inicializa las distancias, el conjunto de nodos visitados y el camino más corto
+    distances = {node: float('inf') for node in graph.nodes}
+    distances[start_node] = 0
+    visited = set()
+    shortest_paths = {node: [] for node in graph.nodes}
+
+    # Inicializa la cola de prioridad (MinHeap personalizado)
+    priority_queue = gl.MinHeap()
+    priority_queue.push((0, start_node))
+
+    while priority_queue.heap:
+        current_distance, current_node = priority_queue.pop()
+
+        # Si ya visitamos este nodo, lo ignoramos
+        if current_node in visited:
+            continue
+
+        # Marca el nodo como visitado
+        visited.add(current_node)
+
+        # Actualiza las distancias y el camino más corto a los nodos vecinos
+        for edge in graph.weights:
+            if edge.node_a == current_node:
+                neighbor = edge.node_b
+            elif edge.node_b == current_node:
+                neighbor = edge.node_a
+            else:
+                continue
+
+            new_distance = current_distance + edge.cost
+
+            if new_distance < distances[neighbor]:
+                distances[neighbor] = new_distance
+                priority_queue.push((new_distance, neighbor))
+                # Actualiza el camino más corto hacia el vecino
+                shortest_paths[neighbor] = shortest_paths[current_node] + [edge]
+
+    return distances, shortest_paths
+
+
+def shortest_distance_to(graph, start_node=1, goal_node=2):
+    if isinstance(start_node, int) and isinstance(goal_node, int):
+        # Si los argumentos son índices, utiliza la lógica original
+        distances, paths = dijkstra(graph, graph.nodes[start_node])
+        path_to = paths[graph.nodes[goal_node]]
+        distance_to = distances[graph.nodes[goal_node]]
+        return path_to, distance_to
+    elif isinstance(start_node, str) and isinstance(goal_node, str):
+        # Si los argumentos son etiquetas, utiliza la lógica para etiquetas
+        start_node = next((node for node in graph.nodes if node.tag == start_node), None)
+        goal_node = next((node for node in graph.nodes if node.tag == goal_node), None)
+
+        if start_node is None or goal_node is None:
+            return None
+
+        distances, paths = dijkstra(graph, start_node)
+        path_to = paths[goal_node]
+        distance_to = distances[goal_node]
+        return path_to, distance_to
+    else:
+        # Si los argumentos no son del mismo tipo, retorna None o maneja el caso según tus necesidades
+        return None
+
+
 if __name__ == '__main__':
     #Seeds interesantes
     #s:19 nquant:6
-    gl.random.seed(38)
+    seed = gl.random.randint(0, 1000000000)
+    #seed = 409481041
+    #seed = 780144336
+    #seed = 666961458
+    #seed = 837479247
+    #seed = 784109775
+    #seed = 66913871
+    seed = 51358019
+    gl.random.seed(seed)
+    print(seed)
     graph = gl.random_graph()
     graph.set_canvas_size(1920, 1080)
-    graph.set_structure_size(size=10)
-    graph.set_nodes_params(10)
+    graph.set_structure_size(size=15)
+    graph.set_nodes_max_val(99)
+    graph.set_weights_max_val(20)
     graph.preparing()
-    graph.build_random(full_connected=True, density=20)
+    graph.build_random(full_connected=True, density=25)
 
-    gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=2000.0, k_attraction_base=0.01)
+    gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=3000.0, k_attraction_base=0.005)
     mst = kruskal_algorithm(graph)
+    path_to, distance_to = shortest_distance_to(graph, "C", "E")
+    print("distance: " + str(distance_to))
+
     canvas = gl.canvas_drawing()
     canvas.set_size(graph)
     canvas.set_canvas_bkg('#1B232B')
-    canvas.draw_mst(graph.weights, '#00CFD5', 1, True)
-    canvas.draw_mst(mst, '#BA5337', 3, False)
+    canvas.draw_weights(graph.weights, '#00CFD5', 1, True)
+    canvas.draw_weights(path_to, '#90FF09', 4, True)
+    #canvas.draw_weights(mst, '#BA5337', 3, False)
     canvas.draw_graph(graph, radius=40, filler='#3B435B', text_c='#9f9f9f', node_outline='#24947F')
-    #canvas.draw_mst(graph.weights)
 

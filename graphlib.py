@@ -18,8 +18,8 @@ class node:
 
 
 class weight:
-    def __init__(self, node_a, node_b):
-        self.cost = random.randint(0, 10)
+    def __init__(self, node_a, node_b, n_range):
+        self.cost = random.randint(0, n_range)
         self.node_a = node_a
         self.node_b = node_b
 
@@ -36,6 +36,7 @@ class random_graph:
         self.c_width = 900
         self.c_height = 900
         self.density = 100
+        self.weight_val_range = 10
 
     def set_canvas_size(self, width, height):
         self.c_width = width
@@ -44,8 +45,11 @@ class random_graph:
     def set_structure_size(self, size):
         self.structure_size = size
 
-    def set_nodes_params(self, n_size):
+    def set_nodes_max_val(self, n_size):
         self.node_n_size = n_size
+
+    def set_weights_max_val(self, weight_val_range):
+        self.weight_val_range = weight_val_range
 
     def generate_next_tag(self):
         result = ""
@@ -80,15 +84,19 @@ class random_graph:
                     if (new_node in main_tree):
                         if (node not in main_tree):
                             main_tree.append(node)
-                    self.weights.append(weight(node, new_node))
+                    self.weights.append(weight(node, new_node, self.weight_val_range))
                     existing_weights.add((node, new_node))
                     existing_weights.add((new_node, node))
 
         if (full_connected):
             for node in self.nodes:
                 if (node not in main_tree):
-                    self.weights.append(weight(node, random.choice(main_tree)))
-                    main_tree.append(node)
+                    new_r_node = random.choice(main_tree)
+                    if (node, new_r_node) not in existing_weights and (new_r_node, node) not in existing_weights:
+                        self.weights.append(weight(node, new_r_node, self.weight_val_range))
+                        existing_weights.add((node, new_r_node))
+                        existing_weights.add((new_r_node, node))
+                        main_tree.append(node)
 
 
     def print_graph(self):
@@ -123,20 +131,26 @@ class canvas_drawing:
         self.image = Image.new('RGB', (self.width, self.height),bkg)
         self.draw = ImageDraw.Draw(self.image)
 
-    def draw_mst(self, weights, color, line_w, draw_w):
-        for w in weights:
-            self.draw.line([(w.node_a.x, w.node_a.y), (w.node_b.x, w.node_b.y)], fill=color, width=line_w)
-
-            if (draw_w == True):
-                self.draw.text([(w.node_a.x+w.node_b.x)/2, (w.node_a.y+w.node_b.y)/2 - 20], str(w.cost), fill='#8f8f8f', font=self.m_font)
-
+    def draw_weights(self, weights, color, line_w, draw_w):
+        for weight in weights:
+            node_a = weight.node_a
+            node_b = weight.node_b
+            self.draw.line([(node_a.x, node_a.y), (node_b.x, node_b.y)], fill=color, width=line_w)
+    
+            if draw_w:
+                message = str(weight.cost)
+                _, _, w, h = self.draw.textbbox((0, 0), message, font = self.m_font)
+                self.draw.text([((node_a.x + node_b.x) / 2) - w, ((node_a.y + node_b.y) / 2) - h], message, fill='#8f8f8f', font=self.m_font)
+    
         self.image.save('graph.png')
 
     def draw_graph(self, graph, radius, filler, text_c, node_outline):
         for node in graph.nodes:
             self.draw.ellipse([node.x-(radius/2), node.y-(radius/2), node.x+(radius/2), node.y+(radius/2)], fill=filler,outline=node_outline, width=2)
 
-            self.draw.text([node.x-(radius/4), node.y-(radius/4)], node.tag +":"+ str(node.value), fill=text_c, font=self.m_font)
+            message = node.tag +":"+ str(node.value)
+            _, _, w, h = self.draw.textbbox((0, 0), message, font = self.m_font)
+            self.draw.text([(node.x-(w/2)), (node.y-(h/2)-3)], message, fill=text_c, font=self.m_font)
 
         self.image.save('graph.png')
 
@@ -212,3 +226,53 @@ def force_directed_layout_weight(graph, iterations=100, k_repulsion=1.0, k_attra
         for node in graph.nodes:
             node.x += node.force_x
             node.y += node.force_y
+
+class MinHeap:
+    def __init__(self):
+        self.heap = []
+
+    def push(self, item):
+        self.heap.append(item)
+        self._heapify_up(len(self.heap) - 1)
+
+    def pop(self):
+        if len(self.heap) == 0:
+            return None
+        if len(self.heap) == 1:
+            return self.heap.pop()
+
+        root = self.heap[0]
+        self.heap[0] = self.heap.pop()
+        self._heapify_down(0)
+        return root
+
+    def _heapify_up(self, index):
+        parent_index = (index - 1) // 2
+        while index > 0 and self.heap[index][0] < self.heap[parent_index][0]:
+            self.heap[index], self.heap[parent_index] = self.heap[parent_index], self.heap[index]
+            index = parent_index
+            parent_index = (index - 1) // 2
+
+    def _heapify_down(self, index):
+        while True:
+            left_child_index = 2 * index + 1
+            right_child_index = 2 * index + 2
+            smallest = index
+
+            if (
+                left_child_index < len(self.heap)
+                and self.heap[left_child_index][0] < self.heap[smallest][0]
+            ):
+                smallest = left_child_index
+
+            if (
+                right_child_index < len(self.heap)
+                and self.heap[right_child_index][0] < self.heap[smallest][0]
+            ):
+                smallest = right_child_index
+
+            if smallest == index:
+                break
+
+            self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
+            index = smallest
