@@ -1,5 +1,8 @@
 import graphlib as gl
 
+import pyglet
+from pyglet import shapes
+
 
 def prepare_random_graph(g_size, width, height):
     #graph.print_weitghts()
@@ -142,6 +145,39 @@ def shortest_distance_to(graph, start_node=1, goal_node=2):
         # Si los argumentos no son del mismo tipo, retorna None o maneja el caso según tus necesidades
         return None
 
+window = pyglet.window.Window()
+
+label = pyglet.text.Label('Hello there',
+                          font_name='BlexMono Nerd Font',
+                          font_size=36,
+                          x=window.width//2,
+                          y=window.height//2,
+                          anchor_x='center',
+                          anchor_y='center')
+
+batch = pyglet.graphics.Batch()
+
+nodes_c = []
+lines_w = []
+label_t = []
+
+def draw_graph_pyg(graph):
+
+    for w in graph.weights:
+        lines_w.append(shapes.Line(w.node_a.x, w.node_a.y, w.node_b.x, w.node_b.y, color=(10, 50, 170), batch=batch))
+        label_t.append(pyglet.text.Label(str(w.cost), font_name='BlexMono Nerd Font', font_size=12, x = (w.node_a.x + w.node_b.x) / 2, y = (w.node_a.y + w.node_b.y) / 2, anchor_x='center', anchor_y='center', batch=batch))
+    for n in graph.nodes:
+        nodes_c.append(shapes.Circle(n.x, n.y, 26, color=(129, 128, 96), batch=batch))
+        nodes_c.append(shapes.Circle(n.x, n.y, 24, color=(20, 128, 96), batch=batch))
+        label_t.append(pyglet.text.Label(n.tag + ":" + str(n.value), font_name='BlexMono Nerd Font', font_size=12, x = n.x, y = n.y, anchor_x='center', anchor_y='center', batch=batch))
+
+
+@window.event
+def on_draw():
+    window.clear()
+    batch.draw()
+    #label.draw()
+
 
 if __name__ == '__main__':
     #Seeds interesantes
@@ -166,7 +202,7 @@ if __name__ == '__main__':
 
     gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=3000.0, k_attraction_base=0.005)
     mst = kruskal_algorithm(graph)
-    path_to, distance_to = shortest_distance_to(graph, "C", "E")
+    path_to, distance_to = shortest_distance_to(graph, "G", "H")
     print("distance: " + str(distance_to))
 
     canvas = gl.canvas_drawing()
@@ -176,4 +212,9 @@ if __name__ == '__main__':
     canvas.draw_weights(path_to, '#90FF09', 4, True)
     #canvas.draw_weights(mst, '#BA5337', 3, False)
     canvas.draw_graph(graph, radius=40, filler='#3B435B', text_c='#9f9f9f', node_outline='#24947F')
+
+    draw_graph_pyg(graph)
+    pyglet.app.run()
+
+
 
