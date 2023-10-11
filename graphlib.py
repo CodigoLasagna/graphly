@@ -1,6 +1,6 @@
 import random
 import math
-from PIL import Image, ImageDraw, ImageFont
+#from PIL import Image, ImageDraw, ImageFont
 
 
 def gen_random_number(size):
@@ -8,13 +8,13 @@ def gen_random_number(size):
 
 
 class node:
-    def __init__(self, n_size, tag, c_width, c_height):
+    def __init__(self, n_size, tag, w_width, w_height):
         self.value = gen_random_number(n_size)
         self.tag = tag
         self.neighbors = []
         self.sep_factor = 300
-        self.x = random.randint((c_width/2)-self.sep_factor, (c_width/2)+self.sep_factor)
-        self.y = random.randint((c_height/2)-self.sep_factor, (c_height/2)+self.sep_factor)
+        self.x = random.randint((w_width/2)-self.sep_factor, (w_width/2)+self.sep_factor)
+        self.y = random.randint((w_height/2)-self.sep_factor, (w_height/2)+self.sep_factor)
 
 
 class weight:
@@ -33,14 +33,14 @@ class random_graph:
         self.weights = []
         self.structure_size = 10
         self.node_n_size = 10
-        self.c_width = 900
-        self.c_height = 900
+        self.w_width = 900
+        self.w_height = 900
         self.density = 100
         self.weight_val_range = 10
 
     def set_canvas_size(self, width, height):
-        self.c_width = width
-        self.c_height = height
+        self.w_width = width
+        self.w_height = height
 
     def set_structure_size(self, size):
         self.structure_size = size
@@ -63,7 +63,7 @@ class random_graph:
     def preparing(self):
         for i in range(self.structure_size):
             self.tag = self.generate_next_tag()
-            self.nodes.append(node(self.node_n_size, self.tag, self.c_width, self.c_height))
+            self.nodes.append(node(self.node_n_size, self.tag, self.w_width, self.w_height))
             self.tag_count += 1
 
     def build_random(self, full_connected = True, density = 100):
@@ -114,45 +114,6 @@ class random_graph:
             result += "N2["+str(w.node_b.value)+"]["+w.node_b.tag+"] "
             result += "w["+str(w.cost)+"] "
             print(result)
-
-class canvas_drawing:
-    def __init__(self):
-        self.height = 600
-        self.width = 800
-        self.image = Image.new('RGB', (self.width, self.height),'white')
-        self.draw = ImageDraw.Draw(self.image)
-        self.m_font = ImageFont.truetype("CodeNext.otf", 14)
-
-    def set_size(self, graph):
-        self.width = graph.c_width
-        self.height = graph.c_height
-
-    def set_canvas_bkg(self, bkg):
-        self.image = Image.new('RGB', (self.width, self.height),bkg)
-        self.draw = ImageDraw.Draw(self.image)
-
-    def draw_weights(self, weights, color, line_w, draw_w):
-        for weight in weights:
-            node_a = weight.node_a
-            node_b = weight.node_b
-            self.draw.line([(node_a.x, node_a.y), (node_b.x, node_b.y)], fill=color, width=line_w)
-    
-            if draw_w:
-                message = str(weight.cost)
-                _, _, w, h = self.draw.textbbox((0, 0), message, font = self.m_font)
-                self.draw.text([((node_a.x + node_b.x) / 2) - w, ((node_a.y + node_b.y) / 2) - h], message, fill='#8f8f8f', font=self.m_font)
-    
-        self.image.save('graph.png')
-
-    def draw_graph(self, graph, radius, filler, text_c, node_outline):
-        for node in graph.nodes:
-            self.draw.ellipse([node.x-(radius/2), node.y-(radius/2), node.x+(radius/2), node.y+(radius/2)], fill=filler,outline=node_outline, width=2)
-
-            message = node.tag +":"+ str(node.value)
-            _, _, w, h = self.draw.textbbox((0, 0), message, font = self.m_font)
-            self.draw.text([(node.x-(w/2)), (node.y-(h/2)-3)], message, fill=text_c, font=self.m_font)
-
-        self.image.save('graph.png')
 
 
 def calculate_repulsion(node1, node2, k_repulsion):
