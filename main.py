@@ -145,55 +145,26 @@ def shortest_distance_to(graph, start_node=1, goal_node=2):
         # Si los argumentos no son del mismo tipo, retorna None o maneja el caso según tus necesidades
         return None
 
-def draw_edges(lines_g : [], edges, color : str, draw_cost=False, batch=None, width=1):
-    lines_g.clear()
-    color = color.lstrip("#")
-    rgb_color = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
-
-    for w in edges:
-        w_x = (w.node_a.x + w.node_b.x) / 2
-        w_y = (w.node_a.y + w.node_b.y) / 2
-        lines_g.append(shapes.Line(w.node_a.x, w.node_a.y, w.node_b.x, w.node_b.y, color=rgb_color, batch=batch, width=width))
-        if (draw_cost):
-            lines_g.append(shapes.Rectangle(x=w_x-8, y=w_y-8, width=16, height=16, color=(0, 0, 0), batch=batch))
-            lines_g.append(pyglet.text.Label(str(w.cost), font_name='Cantarell', font_size=8, x = w_x, y = w_y, anchor_x='center', anchor_y='center', batch=batch))
-
-def draw_graph_pyg(shapes_g = [], graph=None, fill_color : str = '', outline_color : str = '', batch=None, radius = 16):
-    shapes_g.clear()
-    fill_color = fill_color.lstrip("#")
-    outline_color = outline_color.lstrip("#")
-    rgb_fcolor = tuple(int(fill_color[i:i+2], 16) for i in (0, 2, 4))
-    rgb_ocolor = tuple(int(outline_color[i:i+2], 16) for i in (0, 2, 4))
-
-    for n in graph.nodes:
-        shapes_g.append(shapes.Circle(n.x, n.y, radius+2, color=rgb_ocolor, batch=batch))
-        shapes_g.append(shapes.Circle(n.x, n.y, radius, color=rgb_fcolor, batch=batch))
-        shapes_g.append(pyglet.text.Label(n.tag + ":" + str(n.value), font_name='Agave Nerd Font', font_size=11, x = n.x, y = n.y, anchor_x='center', anchor_y='center', batch=batch))
-
-def re_draw_graph_pyg(shapes_g = [], index=-1, graph=None, fill_color : str = '', outline_color : str = '', batch=None, radius = 16):
-    fill_color = fill_color.lstrip("#")
-    outline_color = outline_color.lstrip("#")
-    rgb_fcolor = tuple(int(fill_color[i:i+2], 16) for i in (0, 2, 4))
-    rgb_ocolor = tuple(int(outline_color[i:i+2], 16) for i in (0, 2, 4))
-
-    shapes_g[(index * 3)]     = (shapes.Circle(graph.nodes[index].x, graph.nodes[index].y, radius+2, color=rgb_ocolor, batch=batch))
-    shapes_g[(index * 3) + 1]   = (shapes.Circle(graph.nodes[index].x, graph.nodes[index].y, radius, color=rgb_fcolor, batch=batch))
-    shapes_g[(index * 3) + 2]   = (pyglet.text.Label(graph.nodes[index].tag + ":" + str(graph.nodes[index].value), font_name='Agave Nerd Font', font_size=11, x = graph.nodes[index].x, y = graph.nodes[index].y, anchor_x='center', anchor_y='center', batch=batch))
 
 class main_window(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
-        config = pyglet.gl.Config(double_buffer=True, sample_buffers=1, samples=8)
-        super().__init__(*args,config=config, **kwargs)
+        config = pyglet.gl.Config(double_buffer=True, sample_buffers=1, samples=4)
+        super().__init__(*args, config=config, **kwargs)
         self.graph_g = None
         self.batch = None
         self.graph = None
-        self.lines_g = None
         self.vp_x = 0
         self.vp_y = 0
         self.vp_z = 0
+        
+        bkgcolor_h = "#1e2935"
+        bkgcolor_h = bkgcolor_h.strip('#')
+        self.bkg_c = tuple(int(bkgcolor_h[i:i+2], 16) for i in (0, 2, 4))
+        #pyglet.gl.glClearColor(self.bkg_c[0]/255, self.bkg_c[1]/255, self.bkg_c[2]/255, 1)
 
         self.cur_node = None
         self.node_index = -1
+        self.cur_edges = []
 
     def on_draw(self):
         self.clear()
@@ -226,12 +197,16 @@ class main_window(pyglet.window.Window):
                     self.node_index = i
             if (self.cur_node):
                 self.node_index = self.node_index
+                for i, e in enumerate(self.graph.weights):
+                    if (e.node_a == self.cur_node or e.node_b == self.cur_node):
+                        self.cur_edges.append(self.graph_g.edges[i])
 
     def on_mouse_release(self, x, y, buttons, modifiers):
         if (buttons == pyglet.window.mouse.LEFT):
             self.cur_node = None
             self.node_index = -1
-            draw_edges(lines_g=self.lines_g, edges=self.graph.weights, color='#00CFD5', batch=self.batch, draw_cost=True)
+            self.cur_edges.clear()
+            #draw_edges(lines_g=self.lines_g, edges=self.graph.weights, color='#00CFD5', batch=self.batch, draw_cost=True)
             graph_g.update()
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.vp_z += (scroll_y*2)
@@ -249,6 +224,9 @@ class main_window(pyglet.window.Window):
                 self.cur_node.x = x - self.vp_x
                 self.cur_node.y = y - self.vp_y
                 graph_g.nodes[self.node_index].draw()
+                if (len(self.cur_edges) > 0):
+                    for c_e in self.cur_edges:
+                        c_e.draw()
 
 
 class node_g:
@@ -263,9 +241,35 @@ class node_g:
         self.radius = radius
         self.draw()
     def draw(self):
-        self.outline_s = shapes.Circle(self.node.x, self.node.y, self.radius+2, color=self.outline_color, batch=self.batch, group=pyglet.graphics.Group(order=0))
-        self.fill_s = shapes.Circle(self.node.x, self.node.y, self.radius, color=self.fill_color, batch=self.batch, group=pyglet.graphics.Group(order=1))
-        self.text = pyglet.text.Label(self.node.tag + ":" + str(self.node.value), font_name='Agave Nerd Font', font_size=11, x = self.node.x, y = self.node.y, anchor_x='center', anchor_y='center', batch=self.batch, group=pyglet.graphics.Group(order=2))
+        self.outline_s = shapes.Circle(self.node.x, self.node.y, self.radius+2, color=self.outline_color, batch=self.batch, group=pyglet.graphics.Group(order=1))
+        self.fill_s = shapes.Circle(self.node.x, self.node.y, self.radius, color=self.fill_color, batch=self.batch, group=pyglet.graphics.Group(order=2))
+        self.text = pyglet.text.Label(self.node.tag + ":" + str(self.node.value), font_name='Agave Nerd Font', font_size=11, x = self.node.x, y = self.node.y, anchor_x='center', anchor_y='center', batch=self.batch, group=pyglet.graphics.Group(order=3))
+
+class edge_g:
+    def __init__(self, color : str = '#00CFD5', width = 1, edge : gl.weight = None, batch = None, show_cost : bool = False):
+        self.color_h = color
+        self.color_hs = self.color_h.lstrip("#")
+        self.color = tuple(int(self.color_hs[i:i+2], 16) for i in (0, 2, 4))
+        self.width = width
+        self.edge = edge
+        self.batch = batch
+        self.show_cost = show_cost
+        self.cost_bkg = None
+        self.label = None
+        self.draw()
+
+    def draw(self):
+        self.color_hs = self.color_h.lstrip("#")
+        self.color = tuple(int(self.color_hs[i:i+2], 16) for i in (0, 2, 4))
+        self.line_s = shapes.Line(x=self.edge.node_a.x, y=self.edge.node_a.y, x2=self.edge.node_b.x, y2=self.edge.node_b.y, color=self.color, batch=self.batch, width=self.width, group=pyglet.graphics.Group(order=0))
+        if (self.show_cost):
+            w_x = (self.edge.node_a.x + self.edge.node_b.x)/2
+            w_y = (self.edge.node_a.y + self.edge.node_b.y)/2
+            self.cost_bkg = shapes.Rectangle(x=w_x-8, y=w_y-8, width=16, height=16, color=(0, 0, 0), batch=self.batch, group=pyglet.graphics.Group(order=1))
+            self.label = pyglet.text.Label(str(self.edge.cost), font_name='Cantarell', font_size=8, x = w_x, y = w_y, anchor_x='center', anchor_y='center', batch=self.batch, group=pyglet.graphics.Group(order=1))
+        else:
+            self.cost_bkg = None
+            self.label = None
 
 class graph_g:
     def __init__(self, graph : gl.random_graph, batch = None):
@@ -278,13 +282,27 @@ class graph_g:
     def prepare(self):
         for n in self.graph.nodes:
             self.nodes.append(node_g(node=n, batch=self.batch))
+        for w in self.graph.weights:
+            self.edges.append(edge_g(edge=w, batch=self.batch))
     def update(self):
         for n in self.nodes:
-            n.draw
+            n.draw()
+        for w in self.edges:
+            w.draw()
+
+    def update_weights(self, n_edges, color='#00CFD5', width=1, show_cost=False):
+        for w in self.edges:
+            for w_n in n_edges:
+                if (w.edge == w_n):
+                    w.color_h = color
+                    w.width = width
+                    w.show_cost = show_cost
+        self.update()
 
 if __name__ == '__main__':
 
     seed = gl.random.randint(0, 1000000000)
+    #seed = 20
     gl.random.seed(seed)
     print(seed)
     graph = gl.random_graph()
@@ -297,23 +315,20 @@ if __name__ == '__main__':
 
     gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=1200.0, k_attraction_base=0.005)
     mst = kruskal_algorithm(graph)
-    path_to, distance_to = shortest_distance_to(graph, "A", "B")
+    path_to, distance_to = shortest_distance_to(graph, "A", "D")
     print("distance: " + str(distance_to))
 
     batch = pyglet.graphics.Batch()
-    nodes_g = []
-    lines_g = []
     nodes_list = []
     window = main_window(width=1920, height=1080, resizable=True)
     graph_g = graph_g(graph, batch)
     graph_g.prepare()
     window.graph_g = graph_g
-    draw_edges(lines_g=lines_g, edges=graph.weights, color='#00CFD5', batch=batch, draw_cost=True)
-    #draw_edges(lines_g=lines_w, edges=path_to, color='#90FF09', batch=batch, draw_cost=True, width=3)
-    #draw_edges(lines_g=shapes_g, edges=mst, color='#BA5337', batch=batchs[0], draw_cost=False, width=3)
+    #graph_g.update_weights(mst, '#BA5337', 2)
+    #graph_g.update_weights(graph.weights, '#00CFD5', 1, True)
+    graph_g.update_weights(path_to, '#90FF09', 3, True)
     window.batch = batch
     window.graph = graph
-    window.lines_g = lines_g
 
     pyglet.app.run()
 
