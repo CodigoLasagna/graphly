@@ -1,7 +1,9 @@
 import graphlib as gl
+import geo_cords
 
 import pyglet
 from pyglet import shapes
+from pyglet import image
 
 
 def prepare_random_graph(g_size, width, height):
@@ -272,7 +274,8 @@ class edge_g:
             self.label = None
 
 class graph_g:
-    def __init__(self, graph : gl.random_graph, batch = None):
+    def __init__(self, graph : gl.graph, batch = None, nodes_radius : float = 20.0):
+        self.nodes_radius = nodes_radius
         self.graph = graph
         self.batch = batch
         self.nodes = []
@@ -280,10 +283,12 @@ class graph_g:
 
 
     def prepare(self):
-        for n in self.graph.nodes:
-            self.nodes.append(node_g(node=n, batch=self.batch))
-        for w in self.graph.weights:
-            self.edges.append(edge_g(edge=w, batch=self.batch))
+        if (self.graph.nodes):
+            for n in self.graph.nodes:
+                self.nodes.append(node_g(node=n, batch=self.batch, radius=self.nodes_radius))
+        if (self.graph.weights):
+            for w in self.graph.weights:
+                self.edges.append(edge_g(edge=w, batch=self.batch))
     def update(self):
         for n in self.nodes:
             n.draw()
@@ -300,17 +305,48 @@ class graph_g:
         self.update()
 
 if __name__ == '__main__':
+    datos = geo_cords.obtener_datos_de_coordenadas_geograficas('baja_norte.txt', scale=2000)
+    #geo_cords.print_coords_list(datos)
+    map_image = image.load('images/mexico_map.png')
+
+    graph = gl.graph()
+    graph.set_canvas_size(1000, 890)
+    graph.build_with_geo_data(datos)
+    #print(len(graph.nodes))
+    graph.build_random(True, 100)
+
+    batch = pyglet.graphics.Batch()
+    map_dispaly = pyglet.sprite.Sprite(img=map_image, batch=batch)
+    map_dispaly.width = 1950;
+    map_dispaly.height = 1420;
+    map_dispaly.x = -150;
+    map_dispaly.y = -1100;
+    nodes_list = []
+    window = main_window(width=1920, height=1080, resizable=True)
+    graph_g = graph_g(graph, batch)
+    graph_g.nodes_radius = 5
+    graph_g.prepare()
+    window.graph_g = graph_g
+    #graph_g.update_weights(mst, '#BA5337', 2)
+    #graph_g.update_weights(graph.weights, '#00CFD5', 1, True)
+    #graph_g.update_weights(path_to, '#90FF09', 3, False)
+    window.batch = batch
+    window.graph = graph
+
+    pyglet.app.run()
+
+if __name__ == '__main__t':
 
     seed = gl.random.randint(0, 1000000000)
     #seed = 20
     gl.random.seed(seed)
     print(seed)
-    graph = gl.random_graph()
+    graph = gl.graph()
     graph.set_canvas_size(1000, 1000)
     graph.set_structure_size(size=15)
     graph.set_nodes_max_val(99)
     graph.set_weights_max_val(20)
-    graph.preparing()
+    graph.prepare_random_nodes()
     graph.build_random(full_connected=True, density=20)
 
     gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=1200.0, k_attraction_base=0.005)
@@ -326,7 +362,7 @@ if __name__ == '__main__':
     window.graph_g = graph_g
     #graph_g.update_weights(mst, '#BA5337', 2)
     #graph_g.update_weights(graph.weights, '#00CFD5', 1, True)
-    graph_g.update_weights(path_to, '#90FF09', 3, True)
+    #graph_g.update_weights(path_to, '#90FF09', 3, False)
     window.batch = batch
     window.graph = graph
 

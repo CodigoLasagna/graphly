@@ -24,7 +24,7 @@ class weight:
         self.node_b = node_b
 
 
-class random_graph:
+class graph:
     def __init__(self):
         self.tag = ""
         self.letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -60,7 +60,15 @@ class random_graph:
             quotient -= 1
         return result
 
-    def preparing(self):
+    def build_with_geo_data(self, data = []):
+        for tag, x, y in data:
+            new_node = node(0, tag, self.w_width, self.w_height)
+            new_node.x = x
+            new_node.y = y
+            self.nodes.append(new_node)
+
+
+    def prepare_random_nodes(self):
         for i in range(self.structure_size):
             self.tag = self.generate_next_tag()
             self.nodes.append(node(self.node_n_size, self.tag, self.w_width, self.w_height))
@@ -68,6 +76,8 @@ class random_graph:
 
     def build_random(self, full_connected = True, density = 100):
         st = self.structure_size
+        if (st > len(self.nodes)):
+            st = len(self.nodes)
         existing_weights = set()
         main_tree = []
         main_tree.append(random.choice(self.nodes))
