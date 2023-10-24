@@ -304,7 +304,7 @@ class graph_g:
                     w.show_cost = show_cost
         self.update()
 
-if __name__ == '__main__':
+if __name__ == '__main__t':
     datos = geo_cords.obtener_datos_de_coordenadas_geograficas('baja_norte.txt', scale=2000)
     #geo_cords.print_coords_list(datos)
     map_image = image.load('images/mexico_map.png')
@@ -335,10 +335,10 @@ if __name__ == '__main__':
 
     pyglet.app.run()
 
-if __name__ == '__main__t':
+if __name__ == '__main__':
 
     seed = gl.random.randint(0, 1000000000)
-    #seed = 20
+    seed = 20
     gl.random.seed(seed)
     print(seed)
     graph = gl.graph()
@@ -362,7 +362,7 @@ if __name__ == '__main__t':
     window.graph_g = graph_g
     #graph_g.update_weights(mst, '#BA5337', 2)
     #graph_g.update_weights(graph.weights, '#00CFD5', 1, True)
-    #graph_g.update_weights(path_to, '#90FF09', 3, False)
+    graph_g.update_weights(path_to, '#90FF09', 3, False)
     window.batch = batch
     window.graph = graph
 
