@@ -60,12 +60,31 @@ class graph:
             quotient -= 1
         return result
 
+    def add_custom_node(self, tag, value, x, y):
+        new_node = node(0, tag, self.w_width, self.w_height)
+        new_node.value = value
+        new_node.x = x
+        new_node.y = y
+        self.nodes.append(new_node)
+
+    def add_custom_connection(self, tag_a, tag_b):
+        node_a = next((node for node in self.nodes if node.tag == tag_a), None)
+        node_b = next((node for node in self.nodes if node.tag == tag_b), None)
+    
+        if node_a is not None and node_b is not None and node_b not in node_a.neighbors:
+            node_a.neighbors.append(node_b)
+            self.weights.append(weight(node_a, node_b, self.weight_val_range))
+
     def build_with_geo_data(self, data = []):
         for tag, x, y in data:
             new_node = node(0, tag, self.w_width, self.w_height)
             new_node.x = x
             new_node.y = y
             self.nodes.append(new_node)
+
+    def build_with_custom(self, data = []):
+        for tag, value, x, y in data:
+            self.add_custom_node(tag, value, x, y)
 
 
     def prepare_random_nodes(self):
@@ -247,3 +266,19 @@ class MinHeap:
 
             self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
             index = smallest
+
+class SimpleDeque:
+    def __init__(self):
+        self.items = []
+
+    def append(self, item):
+        self.items.append(item)
+
+    def popleft(self):
+        if not self.is_empty():
+            return self.items.pop(0)
+        else:
+            raise IndexError("pop from an empty deque")
+
+    def is_empty(self):
+        return len(self.items) == 0

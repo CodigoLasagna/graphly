@@ -72,7 +72,6 @@ def kruskal_algorithm(graph):
         # Si los vértices finales no están en la misma componente, agrega el borde al árbol de expansión mínima
         if component_a != component_b:
             mst.append(edge)
-            # Fusiona las dos componentes conectadas en una
             component_a.extend(component_b)
             connected_components.remove(component_b)
 
@@ -144,9 +143,191 @@ def shortest_distance_to(graph, start_node=1, goal_node=2):
         distance_to = distances[goal_node]
         return path_to, distance_to
     else:
-        # Si los argumentos no son del mismo tipo, retorna None o maneja el caso según tus necesidades
         return None
 
+def dfs_algorithm(graph, start_node):
+    visited = set()
+
+    if isinstance(start_node, str):
+        start_node = next((node for node in graph.nodes if node.tag == start_node), None)
+    
+    if start_node is None:
+        print("El nodo no existe")
+        return
+
+    def dfs_recursive(node):
+        visited.add(node)
+        print("Visitando nodo:", node.tag)
+
+        for edge in graph.weights:
+            if edge.node_a == node and edge.node_b not in visited:
+                dfs_recursive(edge.node_b)
+            elif edge.node_b == node and edge.node_a not in visited:
+                dfs_recursive(edge.node_a)
+
+    dfs_recursive(start_node)
+
+def bfs_algorithm(graph, start_node):
+    visited = set()
+
+    if isinstance(start_node, str):
+        start_node = next((node for node in graph.nodes if node.tag == start_node), None)
+
+    if start_node is None:
+        print("Nodo no encontrado")
+        return
+
+    queue = gl.SimpleDeque()
+    queue.append(start_node)
+    visited.add(start_node)
+
+    while not queue.is_empty():
+        current_node = queue.popleft()
+        print("visitando nodo:", current_node.tag)
+
+        for edge in graph.weights:
+            if edge.node_a == current_node and edge.node_b not in visited:
+                queue.append(edge.node_b)
+                visited.add(edge.node_b)
+            elif edge.node_b == current_node and edge.node_a not in visited:
+                queue.append(edge.node_a)
+                visited.add(edge.node_a)
+
+
+def dfs_algorithm_route(graph, start_node, goal_node):
+    visited = set()
+    path = []
+
+    def dfs_recursive(node, current_path):
+        visited.add(node)
+
+        if node == goal_node:
+            path.extend(current_path)
+            return True
+
+        for edge in graph.weights:
+            neighbor = None
+            if edge.node_a == node and edge.node_b not in visited:
+                neighbor = edge.node_b
+            elif edge.node_b == node and edge.node_a not in visited:
+                neighbor = edge.node_a
+
+            if neighbor:
+                if dfs_recursive(neighbor, current_path + [edge]):
+                    return True
+
+        return False
+
+    if isinstance(start_node, str):
+        start_node = next((node for node in graph.nodes if node.tag == start_node), None)
+
+    if isinstance(goal_node, str):
+        goal_node = next((node for node in graph.nodes if node.tag == goal_node), None)
+
+    if start_node is None or goal_node is None:
+        print("Start or goal node not found.")
+        return []
+
+    dfs_recursive(start_node, [])
+    return path
+
+def bfs_algorithm_route(graph, start_node, goal_node):
+    visited = set()
+    path = []
+
+    if isinstance(start_node, str):
+        start_node = next((node for node in graph.nodes if node.tag == start_node), None)
+
+    if isinstance(goal_node, str):
+        goal_node = next((node for node in graph.nodes if node.tag == goal_node), None)
+
+    if start_node is None or goal_node is None:
+        print("Start or goal node not found.")
+        return []
+
+    queue = gl.SimpleDeque()
+    queue.append((start_node, []))
+
+    while not queue.is_empty():
+        current_node, current_path = queue.popleft()
+        visited.add(current_node)
+
+        if current_node == goal_node:
+            path = current_path
+            break
+
+        for edge in graph.weights:
+            neighbor = None
+            if edge.node_a == current_node and edge.node_b not in visited:
+                neighbor = edge.node_b
+            elif edge.node_b == current_node and edge.node_a not in visited:
+                neighbor = edge.node_a
+
+            if neighbor:
+                queue.append((neighbor, current_path + [edge]))
+                visited.add(neighbor)
+
+    return path
+
+def bfs_algorithm_selection(graph, start_node):
+    visited = set()
+
+    if isinstance(start_node, str):
+        start_node = next((node for node in graph.nodes if node.tag == start_node), None)
+
+    if start_node is None:
+        print("Nodo no encontrado")
+        return
+
+    queue = gl.SimpleDeque()
+    queue.append((start_node, 0))
+    visited.add(start_node)
+
+    max_distance = 0
+    eccentricities = []
+
+    while not queue.is_empty():
+        current_node, distance = queue.popleft()
+
+        for edge in graph.weights:
+            if edge.node_a == current_node and edge.node_b not in visited:
+                queue.append((edge.node_b, distance + 1))
+                visited.add(edge.node_b)
+            elif edge.node_b == current_node and edge.node_a not in visited:
+                queue.append((edge.node_a, distance + 1))
+                visited.add(edge.node_a)
+
+        # Actualizar la distancia máxima para obtener la excentricidad
+        max_distance = max(max_distance, distance)
+
+    eccentricities.append(max_distance)
+
+    # Calcular el radio y el diámetro
+    radius = min(eccentricities)
+    diameter = max(eccentricities)
+
+    return eccentricities, radius, diameter
+
+def bfs_algorithm_selection_graph(graph):
+    min_radius = float('inf')
+    max_diameter = 0
+    central_nodes = []
+
+    for start_node in graph.nodes:
+        eccentricities, radius, diameter = bfs_algorithm_selection(graph, start_node)
+
+        if radius < min_radius:
+            min_radius = radius
+
+        if diameter > max_diameter:
+            max_diameter = diameter
+
+    for start_node in graph.nodes:
+        eccentricities, radius, diameter = bfs_algorithm_selection(graph, start_node)
+        if radius == min_radius:  # Nodo central encontrado
+            central_nodes.append(start_node)
+
+    return min_radius, max_diameter, central_nodes
 
 class main_window(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
@@ -233,16 +414,20 @@ class main_window(pyglet.window.Window):
 
 class node_g:
     def __init__(self, node : gl.node, outline_color : str = '#C40F8F', fill_color : str = '#3B435B', radius : float = 20.0, batch = None):
-        fill_color = fill_color.lstrip("#")
-        outline_color = outline_color.lstrip("#")
-        self.outline_color = tuple(int(outline_color[i:i+2], 16) for i in (0, 2, 4))
-        self.fill_color = tuple(int(fill_color[i:i+2], 16) for i in (0, 2, 4))
+        self.fill_color_h = fill_color.lstrip("#")
+        self.outline_color_h = outline_color.lstrip("#")
+        self.outline_color = tuple(int(self.outline_color_h[i:i+2], 16) for i in (0, 2, 4))
+        self.fill_color = tuple(int(self.fill_color_h[i:i+2], 16) for i in (0, 2, 4))
         self.node = node
         self.batch = batch
         self.tag = node.tag
         self.radius = radius
         self.draw()
     def draw(self):
+        self.fill_color_h = self.fill_color_h.lstrip("#")
+        self.outline_color_h = self.outline_color_h.lstrip("#")
+        self.outline_color = tuple(int(self.outline_color_h[i:i+2], 16) for i in (0, 2, 4))
+        self.fill_color = tuple(int(self.fill_color_h[i:i+2], 16) for i in (0, 2, 4))
         self.outline_s = shapes.Circle(self.node.x, self.node.y, self.radius+2, color=self.outline_color, batch=self.batch, group=pyglet.graphics.Group(order=1))
         self.fill_s = shapes.Circle(self.node.x, self.node.y, self.radius, color=self.fill_color, batch=self.batch, group=pyglet.graphics.Group(order=2))
         self.text = pyglet.text.Label(self.node.tag + ":" + str(self.node.value), font_name='Agave Nerd Font', font_size=11, x = self.node.x, y = self.node.y, anchor_x='center', anchor_y='center', batch=self.batch, group=pyglet.graphics.Group(order=3))
@@ -304,6 +489,14 @@ class graph_g:
                     w.show_cost = show_cost
         self.update()
 
+    def update_nodes(self, n_nodes, outline_color='#C40F8F', fill_color='#3B435B'):
+        for n in self.nodes:
+            for n_node in n_nodes:
+                if n.node == n_node:
+                    n.outline_color_h = outline_color
+                    n.fill_color_h = fill_color
+        self.update()
+
 if __name__ == '__main__t':
     datos = geo_cords.obtener_datos_de_coordenadas_geograficas('baja_norte.txt', scale=2000)
     #geo_cords.print_coords_list(datos)
@@ -335,8 +528,7 @@ if __name__ == '__main__t':
 
     pyglet.app.run()
 
-if __name__ == '__main__':
-
+if __name__ == '__main__2':
     seed = gl.random.randint(0, 1000000000)
     seed = 20
     gl.random.seed(seed)
@@ -368,7 +560,82 @@ if __name__ == '__main__':
 
     pyglet.app.run()
 
+if __name__ == '__main__':
+    choice = int(input("DATA: "))
+    dataPT1 = [('A', 0, 500, 900), ('B', 0, 400, 800), ('C', 0, 600, 800), ('D', 0, 300, 700), ('E', 0, 500, 700), ('F', 0, 700, 700)]
+    dataPT2 = [('B', 0, 50, 900), ('A', 0, 150, 900), ('C', 0, 50, 800), ('D', 0, 150, 800), ('E', 0, 250, 800), ('F', 0, 150, 700)]
+    dataPT3 = [('A', 3, 500, 900), ('B', 2, 500, 800), ('C', 3, 350, 700), ('D', 3, 500, 700), ('E', 3, 650, 700), ('F', 4, 500, 600), ('G', 4, 650, 600)]
+    dataPT4 = [('A', 3, 500, 900), ('B', 2, 500, 800), ('C', 3, 350, 700), ('D', 3, 450, 700), ('E', 3, 550, 700), ('F', 2, 650, 700), ('G', 3, 650, 600)]
 
+    graph = gl.graph()
+    graph.set_canvas_size(1000, 1000)
+    if (choice == 1):
+        graph.build_with_custom(dataPT1)
+    if (choice == 2):
+        graph.build_with_custom(dataPT2)
+    if (choice == 3):
+        graph.build_with_custom(dataPT3)
+    if (choice == 4):
+        graph.build_with_custom(dataPT4)
+    # PT1
+    if (choice == 1):
+        graph.add_custom_connection('A', 'B')
+        graph.add_custom_connection('A', 'C')
+        graph.add_custom_connection('B', 'D')
+        graph.add_custom_connection('B', 'E')
+        graph.add_custom_connection('C', 'F')
+    # PT2
+    if (choice == 2):
+        graph.add_custom_connection('B', 'A')
+        graph.add_custom_connection('B', 'C')
+        graph.add_custom_connection('A', 'C')
+        graph.add_custom_connection('A', 'E')
+        graph.add_custom_connection('D', 'A')
+        graph.add_custom_connection('D', 'C')
+        graph.add_custom_connection('D', 'E')
+        graph.add_custom_connection('F', 'D')
+        graph.add_custom_connection('F', 'C')
+        graph.add_custom_connection('F', 'E')
+    if (choice == 3):
+        graph.add_custom_connection('A', 'B')
+        graph.add_custom_connection('B', 'C')
+        graph.add_custom_connection('B', 'D')
+        graph.add_custom_connection('B', 'E')
+        graph.add_custom_connection('D', 'F')
+        graph.add_custom_connection('E', 'G')
+    if (choice == 4):
+        graph.add_custom_connection('A', 'B')
+        graph.add_custom_connection('B', 'C')
+        graph.add_custom_connection('B', 'D')
+        graph.add_custom_connection('B', 'E')
+        graph.add_custom_connection('B', 'F')
+        graph.add_custom_connection('F', 'G')
 
+    #gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=1200.0, k_attraction_base=0.005)
+    #mst = kruskal_algorithm(graph)
+    #path_to, distance_to = shortest_distance_to(graph, "A", "D")
 
+    batch = pyglet.graphics.Batch()
+    nodes_list = []
+    window = main_window(width=1920, height=1080, resizable=True)
+    graph_g = graph_g(graph, batch)
+    graph_g.prepare()
+    window.graph_g = graph_g
+    print("Algoritmo DFS")
+    dfs_algorithm(graph, 'A')
+    dfs_route = dfs_algorithm_route(graph, 'A', 'F')
+    print("Algoritmo BFS")
+    bfs_algorithm(graph, 'A')
+    radius, diameter, nodes = bfs_algorithm_selection_graph(graph)
+    graph_g.update_nodes(n_nodes=nodes, outline_color="#BA5337", fill_color="#205F75")
 
+    print("Radius: " + str(radius) + " diameter:" + str(diameter))
+    #graph_g.update_weights(dfs_route, '#2A53B7', 2)
+    #graph_g.update_weights(bfs_route, '#BA5337', 2)
+    #graph_g.update_weights(mst, '#BA5337', 2)
+    #graph_g.update_weights(graph.weights, '#00CFD5', 1, True)
+    #graph_g.update_weights(path_to, '#90FF09', 3, False)
+    window.batch = batch
+    window.graph = graph
+
+    pyglet.app.run()
