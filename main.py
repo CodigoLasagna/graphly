@@ -23,7 +23,7 @@ def prim_algorithm(graph):
     visited[graph.nodes.index(start_node)] = True
 
     # Itera hasta que todos los nodos estén en el árbol de expansión mínima
-    while len(mst) < len(graph.nodes) - 1:
+    while len(mst < len(graph.nodes) - 1):
         min_weight = float('inf')
         min_edge = None
 
@@ -528,7 +528,7 @@ if __name__ == '__main__t':
 
     pyglet.app.run()
 
-if __name__ == '__main__2':
+if __name__ == '__main__1':
     seed = gl.random.randint(0, 1000000000)
     seed = 20
     gl.random.seed(seed)
@@ -562,10 +562,19 @@ if __name__ == '__main__2':
 
 if __name__ == '__main__':
     choice = int(input("DATA: "))
-    dataPT1 = [('A', 0, 500, 900), ('B', 0, 400, 800), ('C', 0, 600, 800), ('D', 0, 300, 700), ('E', 0, 500, 700), ('F', 0, 700, 700)]
+    dataPT1 = [('A', 0, 500, 900), ('B', 0, 400, 800), ('D', 0, 600, 800), ('E', 0, 300, 700)]
     dataPT2 = [('B', 0, 50, 900), ('A', 0, 150, 900), ('C', 0, 50, 800), ('D', 0, 150, 800), ('E', 0, 250, 800), ('F', 0, 150, 700)]
     dataPT3 = [('A', 3, 500, 900), ('B', 2, 500, 800), ('C', 3, 350, 700), ('D', 3, 500, 700), ('E', 3, 650, 700), ('F', 4, 500, 600), ('G', 4, 650, 600)]
     dataPT4 = [('A', 3, 500, 900), ('B', 2, 500, 800), ('C', 3, 350, 700), ('D', 3, 450, 700), ('E', 3, 550, 700), ('F', 2, 650, 700), ('G', 3, 650, 600)]
+    dataPT5 = [
+            ('A', 3, 500, 900),
+            ('B', 2, 400, 800),
+            ('C', 3, 600, 800),
+            ('D', 3, 400, 700),
+            ('E', 3, 500, 800),
+            ('F', 2, 550, 700),
+            ('G', 3, 650, 700)
+            ]
 
     graph = gl.graph()
     graph.set_canvas_size(1000, 1000)
@@ -577,13 +586,18 @@ if __name__ == '__main__':
         graph.build_with_custom(dataPT3)
     if (choice == 4):
         graph.build_with_custom(dataPT4)
+    if (choice == 5):
+        graph.build_with_custom(dataPT5)
     # PT1
     if (choice == 1):
         graph.add_custom_connection('A', 'B')
-        graph.add_custom_connection('A', 'C')
-        graph.add_custom_connection('B', 'D')
+        graph.add_custom_connection('A', 'D')
+        graph.add_custom_connection('B', 'A')
         graph.add_custom_connection('B', 'E')
-        graph.add_custom_connection('C', 'F')
+        graph.add_custom_connection('D', 'A')
+        graph.add_custom_connection('D', 'E')
+        graph.add_custom_connection('E', 'B')
+        graph.add_custom_connection('E', 'D')
     # PT2
     if (choice == 2):
         graph.add_custom_connection('B', 'A')
@@ -610,6 +624,16 @@ if __name__ == '__main__':
         graph.add_custom_connection('B', 'E')
         graph.add_custom_connection('B', 'F')
         graph.add_custom_connection('F', 'G')
+    if (choice == 5):
+        graph.add_custom_connection('A', 'B')
+        graph.add_custom_connection('A', 'E')
+        graph.add_custom_connection('A', 'C')
+        graph.add_custom_connection('B', 'E')
+        graph.add_custom_connection('B', 'D')
+        graph.add_custom_connection('E', 'D')
+        graph.add_custom_connection('C', 'F')
+        graph.add_custom_connection('C', 'G')
+        #graph.add_custom_connection('D', 'F')
 
     #gl.force_directed_layout_weight(graph, iterations=1000, k_repulsion=1200.0, k_attraction_base=0.005)
     #mst = kruskal_algorithm(graph)
@@ -626,8 +650,9 @@ if __name__ == '__main__':
     dfs_route = dfs_algorithm_route(graph, 'A', 'F')
     print("Algoritmo BFS")
     bfs_algorithm(graph, 'A')
+    bfs_route = bfs_algorithm_route(graph, 'G', 'D')
     radius, diameter, nodes = bfs_algorithm_selection_graph(graph)
-    graph_g.update_nodes(n_nodes=nodes, outline_color="#BA5337", fill_color="#205F75")
+    graph_g.update_nodes(n_nodes=nodes, outline_color="#BA5337", fill_color="#209FA5")
 
     print("Radius: " + str(radius) + " diameter:" + str(diameter))
     #graph_g.update_weights(dfs_route, '#2A53B7', 2)
@@ -635,6 +660,7 @@ if __name__ == '__main__':
     #graph_g.update_weights(mst, '#BA5337', 2)
     #graph_g.update_weights(graph.weights, '#00CFD5', 1, True)
     #graph_g.update_weights(path_to, '#90FF09', 3, False)
+    graph_g.update_weights(bfs_route, '#90FF09', 4)
     window.batch = batch
     window.graph = graph
 
