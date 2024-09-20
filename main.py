@@ -650,7 +650,7 @@ if __name__ == '__main__':
     dfs_route = dfs_algorithm_route(graph, 'A', 'F')
     print("Algoritmo BFS")
     bfs_algorithm(graph, 'A')
-    bfs_route = bfs_algorithm_route(graph, 'G', 'D')
+    bfs_route = dfs_algorithm_route(graph, 'G', 'D')
     radius, diameter, nodes = bfs_algorithm_selection_graph(graph)
     graph_g.update_nodes(n_nodes=nodes, outline_color="#BA5337", fill_color="#209FA5")
 

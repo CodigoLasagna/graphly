@@ -13,8 +13,8 @@ class node:
         self.tag = tag
         self.neighbors = []
         self.sep_factor = 300
-        self.x = random.randint((w_width/2)-self.sep_factor, (w_width/2)+self.sep_factor)
-        self.y = random.randint((w_height/2)-self.sep_factor, (w_height/2)+self.sep_factor)
+        self.x = random.randint(int((w_width/2)-self.sep_factor), int((w_width/2)+self.sep_factor))
+        self.y = random.randint(int((w_height/2)-self.sep_factor), int((w_height/2)+self.sep_factor))
 
 
 class weight:
